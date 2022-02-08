@@ -37,7 +37,13 @@ $Rsig = "R"
     } }
 
 :exitLabel while ($true) {
+    # User Input
+    $Company = (Read-Host "Enter the company name").TrimStart().TrimEnd().replace(' ', '_')
+    $Position = (Read-Host "Enter the position to apply").TrimStart().TrimEnd().replace(' ', '_')  
 
+
+
+    $err = $false
     # If username file is empty ask for username and write to file
     if ([String]::IsNullOrWhiteSpace((Get-content "$Userfile.txt"))) {
         $User = (Read-Host "Enter your name").TrimStart().TrimEnd().replace(' ', '_')
@@ -47,10 +53,6 @@ $Rsig = "R"
     else {
         $User = Get-Content -Path "$Userfile.txt" -TotalCount 1
     }
-
-    # User Input 
-    $Company = (Read-Host "Enter the company name").TrimStart().TrimEnd().replace(' ', '_')
-    $Position = (Read-Host "Enter the position to apply").TrimStart().TrimEnd().replace(' ', '_')  
     
     $CLfilename = "$($CLDIR)\$($CLsig)-$($Position)-$($Company)"
     $Rfilename = "$($RDIR)\$($Rsig)-$($Position)-$($Company)"
@@ -59,7 +61,7 @@ $Rsig = "R"
     $RNewfilename = "$($Dest)\$($User)-$($Position)-$($Company)-Resume"
     $TNewfilename = "$($Dest)\$($User)-$($Position)-$($Company)-Transcript"
 
-    if ((Read-Host "`nIs this a new position? [Y] / [N]") -eq 'Y') {
+    if ((Read-Host "`nCreate a new resume and coverletter from template? [Y] / [N]") -eq 'Y') {
         Copy-Item -Path "$Rtmp.docx" -Destination "$Rfilename.docx" 
         ii "$Rfilename.docx" ; Write-Host "Created the initial resume file" -ForegroundColor green
 
@@ -78,6 +80,7 @@ $Rsig = "R"
     }
     catch {
         Write-Host "Failed to copy $($CLfilename)" -ForegroundColor red
+        $err = $true
     }
 
     # Copy Resume
@@ -87,6 +90,7 @@ $Rsig = "R"
     }
     catch {
         Write-Host "Failed to copy $($Rfilename)" -ForegroundColor red
+        $err = $true
     }
 
     # Copy Current Transcript
@@ -95,24 +99,29 @@ $Rsig = "R"
     }
     catch {
         Write-Host "Failed to copy Current_Transcript.pdf" -ForegroundColor red
+        $err = $true
     }
 
     $date = Get-Date -Format "MM/dd/yyyy"
     $time = Get-Date -Format "HH:mm K"
 
     # If log file is empty create header 
-    if ([String]::IsNullOrWhiteSpace((Get-content "$LOG.csv"))) {
+    if ([String]::IsNullOrWhiteSpace((Get-content "$LOG.csv")), !$err) {
         "{0}, {1}, {2}, {3}" -f "Company", "Position", "Submision Date mm/dd/yyyy", "Time" | add-content "$LOG.csv"
     } 
     "{0}, {1}, {2}, {3}" -f $Company, $Position, $date, $time | add-content "$LOG.csv"
 
     while ($true) {
-        $in = Read-Host "`nApply again? [Y] / [N]"
-        if ($in -eq 'N') {
-            break exitLabel
-        }
-        elseif ($in -eq "Y") {
-            break 
+        $in = Read-Host "`nSome files failed be copy, Try again? [Y] / [N]" 
+        if ($err) { if ($in -eq 'Y') { break skipuserinput } }
+        elseif ($in -eq 'N') {
+            $in = Read-Host "`nStart a new application [Y] / [N]"
+            if ($in -eq 'N') {
+                break exitLabel
+            }
+            elseif ($in -eq "Y") {
+                break 
+            }
         }
     }
 }
