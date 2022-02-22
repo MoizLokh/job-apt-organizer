@@ -113,7 +113,7 @@ $Rsig = "R"
 
     while ($true) {
         $in = Read-Host "`nSome files failed be copy, Try again? [Y] / [N]" 
-        if ($err) { if ($in -eq 'Y') { break skipuserinput } }
+        if ($err) { if ($in -eq 'Y') { break skipuserinput } 
         elseif ($in -eq 'N') {
             $in = Read-Host "`nStart a new application [Y] / [N]"
             if ($in -eq 'N') {
@@ -123,6 +123,7 @@ $Rsig = "R"
                 break 
             }
         }
+	}
     }
 }
 
